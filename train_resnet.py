@@ -42,7 +42,7 @@ def fit_one_cycle(epochs, max_lr, model, train_loader, val_loader,
     torch.cuda.empty_cache()
     history = []
  
-    optimizer = optim.SGD(model.parameters(), lr=.05,
+    optimizer = optim.SGD(model.parameters(), lr=.01,
                           momentum=0.9, weight_decay=5e-4, nesterov=True)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
     ## Set up cutom optimizer with weight decay
