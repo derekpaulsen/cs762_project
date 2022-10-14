@@ -1,25 +1,18 @@
+import sys
+sys.path.append('.')
 import numpy as np
 import torch
 from torch import nn
 from torch import optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms, models
-from torch.utils.data.sampler import SubsetRandomSampler
+from utils.data import accuracy
+from utils.cifar10 import load_cifar10
 
 
 device = 'cuda'
 data_dir = '/data/train'
 
-def to_device(data, device):
-    """Move tensor(s) to chosen device"""
-    if isinstance(data, (list,tuple)):
-        return [to_device(x, device) for x in data]
-    return data.to(device, non_blocking=True)
-
-
-def accuracy(outputs, labels):
-    _, preds = torch.max(outputs, dim=1)
-    return torch.tensor(torch.sum(preds == labels).item() / len(preds))
 
 @torch.no_grad()
 def evaluate(model, val_loader):
@@ -83,20 +76,6 @@ def fit_one_cycle(epochs, max_lr, model, train_loader, val_loader,
     return history
 
 
-class DeviceDataLoader():
-    """Wrap a dataloader to move data to a device"""
-    def __init__(self, dl, device):
-        self.dl = dl
-        self.device = device
-        
-    def __iter__(self):
-        """Yield a batch of data after moving it to device"""
-        for b in self.dl: 
-            yield to_device(b, self.device)
-
-    def __len__(self):
-        """Number of batches"""
-        return len(self.dl)
 
 class CudaDataset(torch.utils.data.Dataset):
 
@@ -121,59 +100,6 @@ class CudaDataset(torch.utils.data.Dataset):
 
 
 
-def load_cifar10():
-    stats = ((0.4914, 0.4822, 0.4465), (0.24705882352941178, 0.24352941176470588, 0.2615686274509804))
-    train_tfms = transforms.Compose([transforms.RandomCrop(32, padding=4, padding_mode='reflect'), 
-                         transforms.RandomHorizontalFlip(), 
-                         transforms.ToTensor(), 
-                         transforms.Normalize(*stats,inplace=True)])
-    valid_tfms = transforms.Compose([transforms.ToTensor(), transforms.Normalize(*stats)])
-
-
-    trainset = datasets.CIFAR10(root='./data', train=True,
-                                            download=True, transform=train_tfms)
-    
-
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=128,
-                                              shuffle=True, pin_memory=True, num_workers=16)
-    #import pdb; pdb.set_trace()
-    testset = datasets.CIFAR10(root='./data', train=False,
-                                           download=True, transform=valid_tfms)
-
-
-    testloader = torch.utils.data.DataLoader(testset, batch_size=100,
-                                             shuffle=False, pin_memory=True, num_workers=16)
-
-    classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-    return DeviceDataLoader(trainloader, device), DeviceDataLoader(testloader, device)
-
-def load_split_train_test(datadir, valid_size = .2):
-    train_transforms = transforms.Compose([transforms.Resize(224),
-                                       transforms.ToTensor(),
-                                       ])
-    test_transforms = transforms.Compose([transforms.Resize(224),
-                                      transforms.ToTensor(),
-                                      ])
-    train_data = datasets.ImageFolder(datadir,       
-                    transform=train_transforms)
-    test_data = datasets.ImageFolder(datadir,
-                    transform=test_transforms)
-    num_train = len(train_data)
-    indices = list(range(num_train))
-    split = int(np.floor(valid_size * num_train))
-    np.random.shuffle(indices)
-    train_idx, test_idx = indices[split:], indices[:split]
-    train_sampler = SubsetRandomSampler(train_idx)
-    test_sampler = SubsetRandomSampler(test_idx)
-    trainloader = torch.utils.data.DataLoader(train_data,
-                   sampler=train_sampler, batch_size=64)
-    testloader = torch.utils.data.DataLoader(test_data,
-                   sampler=test_sampler, batch_size=64)
-    return trainloader, testloader
-
-
 def load_resnet18():
     model = models.resnet18(weights=None)
     
@@ -186,8 +112,6 @@ def load_resnet18():
 def main():
     
     model = load_resnet18()
-    criterion = nn.NLLLoss()
-    optimizer = optim.Adam(model.fc.parameters(), lr=0.01)
 
     train_dl, valid_dl = load_cifar10()
     epochs = 250
