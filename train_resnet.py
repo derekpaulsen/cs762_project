@@ -112,8 +112,9 @@ def load_resnet18():
 def main():
     
     model = load_resnet18()
-
-    train_dl, valid_dl = load_cifar10(True)
+    # use syn training and real validiation
+    train_dl, _ = load_cifar10(True)
+    _, valid_dl = load_cifar10(False)
     #import pdb; pdb.set_trace()
     epochs = 250
     max_lr = 0.01
