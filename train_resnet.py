@@ -113,7 +113,8 @@ def main():
     
     model = load_resnet18()
 
-    train_dl, valid_dl = load_cifar10()
+    train_dl, valid_dl = load_cifar10(True)
+    #import pdb; pdb.set_trace()
     epochs = 250
     max_lr = 0.01
     #grad_clip = 0.1

@@ -11,6 +11,8 @@ import pickle
 import math
 from tqdm import tqdm
 from utils.data import DeviceDataLoader
+import pickle
+import PIL
 
 OUT_IMAGE_SIZE = (32, 32)
 
@@ -34,17 +36,12 @@ MAX_FILE_SIZE = 20 * 2**20
 TRAIN_IMAGES_PER_CAT = 5000
 #TEST_IMAGES_PER_CAT = 1000
 
-def _img_tensor_to_bytes(tensor):
-    return tensor.numpy().dumps()
-
-def _bytes_to_img_tensor(bytes):
-    return torch.from_numpy(pickle.loads(bytes))
 
 def _preprocess_syn_cifar10_img(img_path):
-    img = read_image(str(img_path))
-    img = _syn_transform.forward(img)
-    img = _img_tensor_to_bytes(img)
-    return (img, _dir_to_label[img_path.parent.name])
+    with PIL.Image.open(img_path) as img:
+        img = img.resize(OUT_IMAGE_SIZE, PIL.Image.Resampling.BILINEAR)
+        img = pickle.dumps(img)
+        return (img, _dir_to_label[img_path.parent.name])
 
 
 
@@ -73,7 +70,6 @@ def make_syn_cifar10(in_dir, out_dir):
     train = data.groupby('label')\
                 .apply(lambda x: x.head(TRAIN_IMAGES_PER_CAT))\
                 .reset_index(drop=True)
-    print(train)
     test = data.drop(index=train.index)
     print(test)
     
@@ -85,10 +81,11 @@ class SyntheticCIFAR10(torch.utils.data.Dataset):
     def __init__(self, data_dir, train, transform=None):
         self.transform = transform
         self.train = train
+        data_dir = Path(data_dir)
         data_dir = data_dir / 'train' if train else data_dir / 'test'
         data = pd.concat(list(map(pd.read_parquet, data_dir.glob('*.parquet'))))
-        self._tensors = data['img_bytes'].apply(_bytes_to_img_tensor).values
-        self._labels = torch.from_numpy(data['label'].values).long()
+        self._tensors = data['img_bytes'].apply(pickle.loads).values.tolist()
+        self._labels = data['label'].values.tolist()
 
     def __len__(self):
         return len(self._labels)
@@ -102,7 +99,6 @@ class SyntheticCIFAR10(torch.utils.data.Dataset):
 
 def load_cifar10(synthetic=False):
     stats = ((0.4914, 0.4822, 0.4465), (0.24705882352941178, 0.24352941176470588, 0.2615686274509804))
-
     train_tfms = transforms.Compose([transforms.RandomCrop(32, padding=4, padding_mode='reflect'), 
                          transforms.RandomHorizontalFlip(), 
                          transforms.ToTensor(), 
