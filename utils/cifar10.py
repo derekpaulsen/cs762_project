@@ -1,3 +1,5 @@
+import sys
+sys.path.append('.')
 import torch 
 import pandas as pd
 from pathlib import Path
@@ -8,7 +10,7 @@ from torchvision.io import  read_image
 import pickle 
 import math
 from tqdm import tqdm
-from .data import DeviceDataLoader
+from utils.data import DeviceDataLoader
 
 OUT_IMAGE_SIZE = (32, 32)
 
@@ -29,6 +31,8 @@ _dir_to_label = {
 }
 # 20 MB
 MAX_FILE_SIZE = 20 * 2**20
+TRAIN_IMAGES_PER_CAT = 5000
+#TEST_IMAGES_PER_CAT = 1000
 
 def _img_tensor_to_bytes(tensor):
     return tensor.numpy().dumps()
@@ -43,15 +47,11 @@ def _preprocess_syn_cifar10_img(img_path):
     return (img, _dir_to_label[img_path.parent.name])
 
 
-def make_syn_cifar10(in_dir, out_dir):
+
+def _write_chunks(data, out_dir, name_prefix):
     out_dir.mkdir(parents=True, exist_ok=True)
-    file_itr = list(in_dir.glob('**/*.png'))
-    pool = Parallel(n_jobs=-1)
-    pairs = pool(delayed(_preprocess_syn_cifar10_img)(i) for i in tqdm(file_itr))
 
-    data = pd.DataFrame(pairs, columns=['img_bytes', 'label'])
     nbytes =  data['img_bytes'].apply(len).sum()
-
     nchunks = math.ceil(nbytes / MAX_FILE_SIZE)
     chunk_size = len(data) // nchunks
     slices = list(range(0, len(data), chunk_size))
@@ -59,9 +59,26 @@ def make_syn_cifar10(in_dir, out_dir):
         slices.append(len(data))
 
     for i, start, end in tqdm(zip(range(len(slices)), slices[:-1], slices[1:])):
-        fname = out_dir / f'chunk_{i}.parquet'
+        fname = out_dir / f'{name_prefix}_{i}.parquet'
         data.iloc[start:end].to_parquet(fname, index=False)
 
+
+
+def make_syn_cifar10(in_dir, out_dir):
+    file_itr = list(in_dir.glob('**/*.png'))
+    pool = Parallel(n_jobs=-1)
+    pairs = pool(delayed(_preprocess_syn_cifar10_img)(i) for i in tqdm(file_itr))
+
+    data = pd.DataFrame(pairs, columns=['img_bytes', 'label'])
+    train = data.groupby('label')\
+                .apply(lambda x: x.head(TRAIN_IMAGES_PER_CAT))\
+                .reset_index(drop=True)
+    print(train)
+    test = data.drop(index=train.index)
+    print(test)
+    
+    _write_chunks(train, out_dir/'train', 'train')
+    _write_chunks(test, out_dir/'test', 'test')
 
 class SyntheticCIFAR10(torch.utils.data.Dataset):
 
@@ -115,6 +132,5 @@ if __name__ == '__main__':
     out_dir = Path('./data/synthetic_cifar10')
     make_syn_cifar10(in_dir, out_dir)
 
-    dataset = SyntheticCIFAR10(out_dir)
+    dataset = SyntheticCIFAR10(out_dir, train=True)
     print(dataset[0])
-    print(dataset[[0, 1]])
