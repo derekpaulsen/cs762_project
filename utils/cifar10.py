@@ -2,6 +2,7 @@ import sys
 sys.path.append('.')
 import torch 
 import pandas as pd
+import numpy as np
 from pathlib import Path
 from joblib import delayed, Parallel
 import multiprocessing
@@ -11,6 +12,7 @@ import pickle
 import math
 from tqdm import tqdm
 from utils.data import DeviceDataLoader
+from torch.utils.data import Subset, ConcatDataset
 import pickle
 import PIL
 
@@ -59,6 +61,12 @@ def _write_chunks(data, out_dir, name_prefix):
         fname = out_dir / f'{name_prefix}_{i}.parquet'
         data.iloc[start:end].to_parquet(fname, index=False)
 
+def _slice_dataset(dataset, percent):
+    if percent == 1.0:
+        return dataset
+    else:
+        indexes = np.random.choice(np.arange(len(dataset)), size=int(len(dataset) * percent), replace=False)
+        return Subset(dataset, indexes)
 
 
 def make_syn_cifar10(in_dir, out_dir):
@@ -97,7 +105,7 @@ class SyntheticCIFAR10(torch.utils.data.Dataset):
         return (X, self._labels[index])
     
 
-def load_cifar10(synthetic=False):
+def load_cifar10(norm_train_percent, norm_valid_percent, syn_train_percent, syn_valid_percent, device='cuda'):
     stats = ((0.4914, 0.4822, 0.4465), (0.24705882352941178, 0.24352941176470588, 0.2615686274509804))
     train_tfms = transforms.Compose([transforms.RandomCrop(32, padding=4, padding_mode='reflect'), 
                          transforms.RandomHorizontalFlip(), 
@@ -105,13 +113,27 @@ def load_cifar10(synthetic=False):
                          transforms.Normalize(*stats,inplace=True)])
 
     valid_tfms = transforms.Compose([transforms.ToTensor(), transforms.Normalize(*stats)])
+    train_datasets = []
+    valid_datasets = []
 
-    if synthetic:
-        trainset = SyntheticCIFAR10('./data/synthetic_cifar10/', train=True, transform=train_tfms)
-        testset = SyntheticCIFAR10('./data/synthetic_cifar10/', train=False, transform=valid_tfms)
-    else:
-        trainset = datasets.CIFAR10(root='./data', train=True, download=True, transform=train_tfms)
-        testset = datasets.CIFAR10(root='./data', train=False, download=True, transform=valid_tfms)
+    if syn_train_percent > 0:
+        trainset = _slice_dataset(SyntheticCIFAR10('./data/synthetic_cifar10/', train=True, transform=train_tfms), syn_train_percent)
+        train_datasets.append(trainset)
+
+    if syn_valid_percent > 0:
+        testset = _slice_dataset(SyntheticCIFAR10('./data/synthetic_cifar10/', train=False, transform=valid_tfms), syn_valid_percent)
+        valid_datasets.append(testset)
+
+    if norm_train_percent > 0:
+        trainset = _slice_dataset(datasets.CIFAR10('./data', train=True, transform=train_tfms), norm_train_percent)
+        train_datasets.append(trainset)
+
+    if norm_valid_percent > 0:
+        testset = _slice_dataset(datasets.CIFAR10('./data', train=False, transform=valid_tfms), norm_valid_percent)
+        valid_datasets.append(testset)
+
+    trainset = ConcatDataset(train_datasets)
+    testset = ConcatDataset(valid_datasets)
 
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=128,
                                               shuffle=True, pin_memory=True, num_workers=16)
@@ -120,7 +142,7 @@ def load_cifar10(synthetic=False):
     testloader = torch.utils.data.DataLoader(testset, batch_size=100,
                                              shuffle=False, pin_memory=True, num_workers=16)
     
-    return DeviceDataLoader(trainloader, 'cuda'), DeviceDataLoader(testloader, 'cuda')
+    return DeviceDataLoader(trainloader, device), DeviceDataLoader(testloader, device)
 
 
 if __name__ == '__main__':

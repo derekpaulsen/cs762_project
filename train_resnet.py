@@ -8,9 +8,11 @@ import torch.nn.functional as F
 from torchvision import datasets, transforms, models
 from utils.data import accuracy
 from utils.cifar10 import load_cifar10
+from multiprocessing import cpu_count
+from tqdm import tqdm
 
-
-device = 'cuda'
+torch.set_num_threads(cpu_count())
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 data_dir = '/data/train'
 
 
@@ -50,7 +52,7 @@ def fit_one_cycle(epochs, max_lr, model, train_loader, val_loader,
         model.train()
         train_losses = []
         lrs = []
-        for inputs, labels in train_loader:
+        for inputs, labels in tqdm(train_loader):
             pred = model.forward(inputs)       
             loss = loss_fn(pred, labels)
             train_losses.append(loss)
@@ -77,29 +79,6 @@ def fit_one_cycle(epochs, max_lr, model, train_loader, val_loader,
 
 
 
-class CudaDataset(torch.utils.data.Dataset):
-
-    def __init__(self, dataset, device):
-
-        inputs = []
-        labels = []
-        for i, l in dataset:
-            inputs.append(i)
-            labels.append(l)
-
-        self._len = len(dataset)
-        self.inputs = torch.stack(inputs).to(device)
-        self.labels = torch.tensor(labels).to(device)
-
-
-    def __len__(self):
-        return self._len
-
-    def __getitem__(self, idx):
-        return (self.inputs[idx], self.labels[idx])
-
-
-
 def load_resnet18():
     model = models.resnet18(weights=None)
     
@@ -113,8 +92,7 @@ def main():
     
     model = load_resnet18()
     # use syn training and real validiation
-    train_dl, _ = load_cifar10(True)
-    _, valid_dl = load_cifar10(False)
+    train_dl, valid_dl = load_cifar10(.5, 1, .5, 0, device)
     #import pdb; pdb.set_trace()
     epochs = 250
     max_lr = 0.01
