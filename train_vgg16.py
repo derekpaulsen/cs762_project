@@ -93,13 +93,14 @@ def train(epochs, model, train_loader, val_loader):
         history.append(result)
     return history
 
-def load_resnet18():
-    model = models.resnet18(pretrained=False)
-    
-    #model.fc = nn.Sequential( nn.Linear(512, 10), nn.LogSoftmax(dim=1))
-    model.fc = nn.Sequential( nn.Linear(512, 10))
+
+def load_vgg16():
+    model = models.vgg16(pretrained=False)
+    # model.fc = nn.Sequential( nn.Linear(-1, 10))
+    model.classifier[6] = nn.Linear(4096, 10)
     model.to(device)
     return model
+
 
 
 def main(args):
@@ -107,17 +108,13 @@ def main(args):
     ARGS.update(args._get_kwargs())
     ARGS['device'] = device
     props = eval(args.data_props)
-    model = load_resnet18()
+    model = load_vgg16()
     # use syn training and real validiation
     train_dl, valid_dl = load_cifar10(*props, device)
     #import pdb; pdb.set_trace()
     epochs = 250
 
     history = []
-    history += fit_one_cycle(epochs, max_lr, model, train_dl, valid_dl, 
-                                 grad_clip=grad_clip, 
-                                 weight_decay=weight_decay, 
-                                 opt_func=opt_func)
     history += train(epochs, model, train_dl, valid_dl)
     
 
