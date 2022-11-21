@@ -114,10 +114,6 @@ def main(args):
     epochs = 250
 
     history = []
-    history += fit_one_cycle(epochs, max_lr, model, train_dl, valid_dl, 
-                                 grad_clip=grad_clip, 
-                                 weight_decay=weight_decay, 
-                                 opt_func=opt_func)
     history += train(epochs, model, train_dl, valid_dl)
     
 
