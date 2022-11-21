@@ -44,13 +44,6 @@ def train(epochs, model, train_loader, val_loader):
     torch.cuda.empty_cache()
     history = []
 
-    ## Set up cutom optimizer with weight decay
-    #optimizer = opt_func(model.parameters(), max_lr, weight_decay=weight_decay)
-    ## Set up one-cycle learning rate scheduler
-    # this didn't work at all
-    #sched = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=.01, max_lr=.1)
-    #sched = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, epochs=epochs, steps_per_epoch=len(train_loader))
- 
     optimizer = optim.SGD(model.parameters(),
                             lr=.01,
                             momentum=0.9,
@@ -63,24 +56,24 @@ def train(epochs, model, train_loader, val_loader):
     loss_fn = nn.CrossEntropyLoss()
     for epoch in range(epochs):
         start_e = time()
-        # Training Phase 
+        # Training Phase
         model.train()
         train_losses = []
         lrs = []
         for inputs, labels in tqdm(train_loader):
-            pred = model.forward(inputs)       
+            pred = model.forward(inputs)
             loss = loss_fn(pred, labels)
             train_losses.append(loss)
             loss.backward()
-            
-            
+
+
             optimizer.step()
             optimizer.zero_grad()
-            
+
             # Record & update learning rate
             lrs.append(get_lr(optimizer))
             sched.step()
-        epoch_time = time() - start_e       
+        epoch_time = time() - start_e
         # Validation phase
         result = evaluate(model, val_loader)
         result.update(ARGS)
@@ -95,29 +88,12 @@ def train(epochs, model, train_loader, val_loader):
 
 
 
-def load_resnet18():
-    model = models.resnet18(pretrained=False)
-    
-    #model.fc = nn.Sequential( nn.Linear(512, 10), nn.LogSoftmax(dim=1))
+def load_densenet121():
+    model = models.densenet121(weights=None)
+
     model.fc = nn.Sequential( nn.Linear(512, 10))
     model.to(device)
     return model
-
-def load_resnet34():
-    model = models.resnet34(pretrained=False)
-    
-    #model.fc = nn.Sequential( nn.Linear(512, 10), nn.LogSoftmax(dim=1))
-    model.fc = nn.Sequential( nn.Linear(512, 10))
-    model.to(device)
-    return model
-
-def load_vgg16():
-    model = models.vgg16(pretrained=False)
-    # model.fc = nn.Sequential( nn.Linear(-1, 10))
-    model.classifier[6] = nn.Linear(4096, 10)
-    model.to(device)
-    return model
-
 
 
 def main(args):
@@ -125,19 +101,15 @@ def main(args):
     ARGS.update(args._get_kwargs())
     ARGS['device'] = device
     props = eval(args.data_props)
-    model = load_resnet18()
+    model = load_densenet121()
     # use syn training and real validiation
     train_dl, valid_dl = load_cifar10(*props, device)
     #import pdb; pdb.set_trace()
     epochs = 250
 
     history = []
-    history += fit_one_cycle(epochs, max_lr, model, train_dl, valid_dl, 
-                                 grad_clip=grad_clip, 
-                                 weight_decay=weight_decay, 
-                                 opt_func=opt_func)
     history += train(epochs, model, train_dl, valid_dl)
-    
+
 
 if __name__ == '__main__':
     main(argp.parse_args())
