@@ -80,19 +80,37 @@ def fit_one_cycle(epochs, max_lr, model, train_loader, val_loader,
 
 
 def load_resnet18():
-    model = models.resnet18(weights=None)
+    model = models.resnet18(pretrained=False)
     
     #model.fc = nn.Sequential( nn.Linear(512, 10), nn.LogSoftmax(dim=1))
     model.fc = nn.Sequential( nn.Linear(512, 10))
     model.to(device)
     return model
 
+def load_resnet34():
+    model = models.resnet34(pretrained=False)
+    
+    #model.fc = nn.Sequential( nn.Linear(512, 10), nn.LogSoftmax(dim=1))
+    model.fc = nn.Sequential( nn.Linear(512, 10))
+    model.to(device)
+    return model
+
+def load_vgg16():
+    model = models.vgg16(pretrained=False)
+    # model.fc = nn.Sequential( nn.Linear(-1, 10))
+    model.classifier[6] = nn.Linear(4096, 10)
+    model.to(device)
+    return model
+
+
 
 def main():
     
-    model = load_resnet18()
+    # model = load_resnet34()
+    # model = load_resnet18()
+    model = load_vgg16()
     # use syn training and real validiation
-    train_dl, valid_dl = load_cifar10(.5, 1, .5, 0, device)
+    train_dl, valid_dl = load_cifar10(0.5, 1, 0.5, 0, device)
     #import pdb; pdb.set_trace()
     epochs = 250
     max_lr = 0.01
@@ -106,7 +124,11 @@ def main():
                                  grad_clip=grad_clip, 
                                  weight_decay=weight_decay, 
                                  opt_func=opt_func)
-    torch.save(model, 'cifar.pth')
+    # torch.save(model, 'cifar.pth')
+    # torch.save(model, 'cifar_resnet34.pth')
+    # torch.save(model, 'cifar_vgg16_1_1_0_0.pth')
+    #torch.save(model, 'cifar_vgg16_0_1_1_0.pth')
+    torch.save(model, 'cifar_vgg16_05_1_05_0.pth')
 
 
 if __name__ == '__main__':
