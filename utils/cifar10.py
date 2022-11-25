@@ -106,7 +106,7 @@ class SyntheticCIFAR10(torch.utils.data.Dataset):
         return (X, self._labels[index])
     
 
-def load_cifar10(norm_train_percent, norm_valid_percent, syn_train_percent, syn_valid_percent, device='cuda'):
+def load_cifar10(norm_train_percent, syn_train_percent, syn_2_train_percent, device='cuda'):
     stats = ((0.4914, 0.4822, 0.4465), (0.24705882352941178, 0.24352941176470588, 0.2615686274509804))
     train_tfms = transforms.Compose([transforms.RandomCrop(32, padding=4, padding_mode='reflect'), 
                          transforms.RandomHorizontalFlip(), 
@@ -117,21 +117,23 @@ def load_cifar10(norm_train_percent, norm_valid_percent, syn_train_percent, syn_
     train_datasets = []
     valid_datasets = []
 
+    if syn_2_train_percent > 0:
+        # prompt : "a photo of a {category}"
+        trainset = _slice_dataset(SyntheticCIFAR10('./data/synthetic_cifar10_2/', train=True, transform=train_tfms), syn_2_train_percent)
+        train_datasets.append(trainset)
+
     if syn_train_percent > 0:
+        # prompt : "{category}"
         trainset = _slice_dataset(SyntheticCIFAR10('./data/synthetic_cifar10/', train=True, transform=train_tfms), syn_train_percent)
         train_datasets.append(trainset)
 
-    if syn_valid_percent > 0:
-        testset = _slice_dataset(SyntheticCIFAR10('./data/synthetic_cifar10/', train=False, transform=valid_tfms), syn_valid_percent)
-        valid_datasets.append(testset)
-
     if norm_train_percent > 0:
+        # the original cifar 10 dataset
         trainset = _slice_dataset(datasets.CIFAR10('./data', train=True, transform=train_tfms), norm_train_percent)
         train_datasets.append(trainset)
 
-    if norm_valid_percent > 0:
-        testset = _slice_dataset(datasets.CIFAR10('./data', train=False, transform=valid_tfms), norm_valid_percent)
-        valid_datasets.append(testset)
+    testset = _slice_dataset(datasets.CIFAR10('./data', train=False, transform=valid_tfms), 1.0)
+    valid_datasets.append(testset)
 
     trainset = ConcatDataset(train_datasets)
     testset = ConcatDataset(valid_datasets)
