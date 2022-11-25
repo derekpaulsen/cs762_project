@@ -14,9 +14,12 @@ def data_prop_to_str(d):
 
 
 
-df = read_log('./out.json', ['start_time', 'data_props'], ['epoch', 'val_loss', 'accuracy', 'train_loss'])
+df = read_log('./exp_res/resnet_18.json', ['start_time', 'data_props'], ['epoch', 'val_loss', 'accuracy', 'train_loss'])
 
 stats = df.accuracy.apply(np.max).groupby(level=1).describe()
 stats.index = list(map(data_prop_to_str, stats.index))
+print(df)
+print(stats)
+stats = df.accuracy.apply(np.argmax).groupby(level=1).describe()
 print(df)
 print(stats)

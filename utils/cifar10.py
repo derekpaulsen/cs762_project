@@ -43,7 +43,8 @@ def _preprocess_syn_cifar10_img(img_path):
     with PIL.Image.open(img_path) as img:
         img = img.resize(OUT_IMAGE_SIZE, PIL.Image.Resampling.BILINEAR)
         img = pickle.dumps(img)
-        return (img, _dir_to_label[img_path.parent.name])
+
+        return (img, _dir_to_label[img_path.parent.name.split()[-1]])
 
 
 
@@ -147,7 +148,7 @@ def load_cifar10(norm_train_percent, norm_valid_percent, syn_train_percent, syn_
 
 if __name__ == '__main__':
     in_dir = Path('/arx/cifar10/')
-    out_dir = Path('./data/synthetic_cifar10')
+    out_dir = Path('./data/synthetic_cifar10_2/')
     make_syn_cifar10(in_dir, out_dir)
 
     dataset = SyntheticCIFAR10(out_dir, train=True)
