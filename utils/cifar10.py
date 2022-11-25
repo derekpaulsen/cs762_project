@@ -139,11 +139,11 @@ def load_cifar10(norm_train_percent, syn_train_percent, syn_2_train_percent, dev
     testset = ConcatDataset(valid_datasets)
 
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=128,
-                                              shuffle=True, pin_memory=True, num_workers=16)
+                                              shuffle=True, pin_memory=True, num_workers=0)
 
 
     testloader = torch.utils.data.DataLoader(testset, batch_size=100,
-                                             shuffle=False, pin_memory=True, num_workers=16)
+                                             shuffle=False, pin_memory=True, num_workers=0)
     
     return DeviceDataLoader(trainloader, device), DeviceDataLoader(testloader, device)
 

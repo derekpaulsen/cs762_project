@@ -93,8 +93,9 @@ def train(epochs, model, train_loader, val_loader):
         history.append(result)
     return history
 
-def load_resnet18():
-    model = models.resnet18(pretrained=False)
+
+def load_resnet34():
+    model = models.resnet34(pretrained=False)
     
     #model.fc = nn.Sequential( nn.Linear(512, 10), nn.LogSoftmax(dim=1))
     model.fc = nn.Sequential( nn.Linear(512, 10))
@@ -107,7 +108,7 @@ def main(args):
     ARGS.update(args._get_kwargs())
     ARGS['device'] = device
     props = eval(args.data_props)
-    model = load_resnet18()
+    model = load_resnet34()
     # use syn training and real validiation
     train_dl, valid_dl = load_cifar10(*props, device)
     #import pdb; pdb.set_trace()
