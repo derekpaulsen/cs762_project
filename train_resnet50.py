@@ -98,7 +98,7 @@ def load_resnet50():
     model = models.resnet50(pretrained=False)
     
     #model.fc = nn.Sequential( nn.Linear(512, 10), nn.LogSoftmax(dim=1))
-    model.fc = nn.Sequential( nn.Linear(512, 10))
+    model.fc = nn.Sequential( nn.Linear(2048, 10))
     model.to(device)
     return model
 

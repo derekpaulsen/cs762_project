@@ -89,7 +89,7 @@ def train(epochs, model, train_loader, val_loader):
 
 
 def load_densenet121():
-    model = models.densenet121(weights=None)
+    model = models.densenet121(pretrained=False)
 
     model.fc = nn.Sequential( nn.Linear(512, 10))
     model.to(device)
