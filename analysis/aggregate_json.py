@@ -13,6 +13,7 @@ MODELS = [
     'vgg16', 
     'densenet121'
 ]
+N_EPOCHS = 250
 
 def infer_model(fname):
     model = None
@@ -55,12 +56,19 @@ def main():
     files = []
     files += Path('./pre-result/').glob('**/*.json')
     files += Path('./exp_res/12_01_partial/').glob('*.json')
+    files += Path('./exp_res/12_05_partial/').glob('*.json')
 
     kwargs = {
             'run_id_cols' : ['start_time', 'data_props'],
             'proj_cols' : ['epoch', 'val_loss', 'accuracy', 'train_loss']
     }
     data = pd.concat([read_log(f, **kwargs) for f in files], ignore_index=True)
+
+    drop = data['accuracy'].apply(len).ne(N_EPOCHS)
+    print(f'dropping {drop.sum()} rows due to incomplete runs')
+    print(data.loc[drop])
+    print('\n\n')
+    data = data.loc[~drop]
 
     print(data)
     stats = data[['model', 'data_props']].value_counts().sort_index()
