@@ -5,13 +5,15 @@
 ```
 python=3.8 or higher
 
-numpy=1.22.0
-pytorch=1.9.0
-torchvision=0.10.0
-pandas=1.5.2
-pyarrow=10.0.1
-fastparquet=2022.11.0
-matplotlib=3.3.4
+diffusers==0.10.2
+joblib==1.1.0
+matplotlib==3.1.1
+numpy==1.19.5
+pandas==1.1.5
+Pillow==9.3.0
+torch==1.2.0
+torchvision==0.11.2
+tqdm==4.63.0
 ```
 ## Installation
 
@@ -21,13 +23,10 @@ The source code can be installed by simply copying the source code
 git clone https://github.com/derekpaulsen/cs762_project.git
 ```
 
-Then the depencies can be installed with anaconda / miniconda and pip
+Then the dependencies can be installed with pip
 
 ```bash
-conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia
-```
-```bash
-pip install pandas pyarrow fastparquet matplotlib
+pip install -r ./requirements.txt
 ```
 
 ## Generating Data
