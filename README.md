@@ -5,8 +5,9 @@
 ```
 python=3.8 or higher
 
-pytorch=1.9.0
 numpy=1.22.0
+pytorch=1.9.0
+torchvision=0.10.0
 pandas=1.5.2
 pyarrow=10.0.1
 fastparquet=2022.11.0
@@ -22,6 +23,12 @@ git clone https://github.com/derekpaulsen/cs762_project.git
 
 Then the depencies can be installed with anaconda / miniconda and pip
 
+```bash
+conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvidia
+```
+```bash
+pip install pandas pyarrow fastparquet matplotlib
+```
 
 # TODO
 
