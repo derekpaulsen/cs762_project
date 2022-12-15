@@ -30,8 +30,6 @@ conda install pytorch torchvision torchaudio pytorch-cuda=11.6 -c pytorch -c nvi
 pip install pandas pyarrow fastparquet matplotlib
 ```
 
-# TODO
-
 ## Generating Data
 
 To generate synthetic data we used the `./gen_data_cifar10.py`. Before running this script, add your 
