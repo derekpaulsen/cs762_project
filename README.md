@@ -1,7 +1,6 @@
 # cs762_project
 
 
-
 ## Dependancies
 
 # TODO
@@ -82,3 +81,9 @@ To run all of the experiments we provide 5 bash scripts,
 
 These scripts will output json files to the `/tmp` dir with json output for the 
 training results
+
+
+## Results
+
+We include our experimental results in `exp_res/`, both the raw JSON files and the 
+aggreagated results in `./exp_res/aggregated_run.parquet`
