@@ -1,7 +1,7 @@
 # cs762_project
 
 
-## Dependancies
+## Dependencies
 ```
 python=3.8 or higher
 
