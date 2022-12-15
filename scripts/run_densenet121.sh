@@ -1,20 +1,17 @@
 #!/bin/bash
-#
+script='./train_densenet121.py'
+# the directory where everything will be output
+out_dir='/tmp'
+props=('1,0,0' '.5,0,0' '.5,.5,0' '0,1,0' '0,.5,0' '1,1,0' '.5,0,.5' '0,0,1' '0,0,.5' '1,0,1' '1,1,1')
 
-
-for i in seq 10
+for i in 1 2 3 4 5
 do
-        # 50% orig
-        python3.8 ./train_densenet121.py --data_props '(.5, 1, 0, 0)' | tee -a out.json
-        # 50% orig + 50% syn
-        python3.8 ./train_densenet121.py --data_props '(.5, 1, .5, 0)' | tee -a out.json
-        # 100% orig
-        python3.8 ./train_densenet121.py --data_props '(1, 1, 0, 0)' | tee -a out.json
-        # 100% syn
-        python3.8 ./train_densenet121.py --data_props '(0, 1, 1, 0)' | tee -a out.json
-        # 50% syn
-        python3.8 ./train_densenet121.py --data_props '(0, 1, .5, 0)' | tee -a out.json
-        # 100% orig + 100% syn
-        python3.8 ./train_densenet121.py --data_props '(1, 1, 1, 0)' | tee -a out.json
+	for prop in ${props[@]}
+	do
+		## 100% orig BASELINE 
+		out=$(mktemp -p $out_dir --suffix="_$(basename $script).json")
+		echo "$out"
+		CUDA_VISIBLE_DEVICES=5 python3.8 $script --data_props "$prop" | tee -a $out
+	done
 done
 
