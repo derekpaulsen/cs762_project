@@ -2,7 +2,7 @@
 
 
 ## Dependancies
-
+```
 python=3.8 or higher
 
 pytorch=1.9.0
@@ -11,7 +11,7 @@ pandas=1.5.2
 pyasrrow=10.0.1
 fastparquet=2022.11.0
 matplotlib=3.3.4
-
+```
 # TODO
 
 ## Generating Data
