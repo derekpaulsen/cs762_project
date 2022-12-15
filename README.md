@@ -8,10 +8,21 @@ python=3.8 or higher
 pytorch=1.9.0
 numpy=1.22.0
 pandas=1.5.2
-pyasrrow=10.0.1
+pyarrow=10.0.1
 fastparquet=2022.11.0
 matplotlib=3.3.4
 ```
+## Installation
+
+The source code can be installed by simply copying the source code
+
+```bash
+git clone https://github.com/derekpaulsen/cs762_project.git
+```
+
+Then the depencies can be installed with anaconda / miniconda and pip
+
+
 # TODO
 
 ## Generating Data
