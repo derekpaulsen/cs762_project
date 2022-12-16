@@ -1,10 +1,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
+from pathlib import Path
 import numpy as np
 
 #matplotlib.rc('font', weight='bold')
-matplotlib.rc('font', size=22)
+matplotlib.rc('font', size=30)
     
 
 
@@ -45,12 +46,14 @@ def plot_runs(ax, runs, running_max=False):
         ax.plot(np.arange(1, len(acc)+1), acc, label=data_props_to_string(idx), linewidth=4)
     ax.set_xlabel('Epoch')
     
-    ax.set_ylim(ymaxs.max() -.1, None)
 
 
 def make_figure(data, models, data_props, running_max=False):
     scale = 10
-    fig, axes = plt.subplots(1, len(models), figsize=(3 * scale,  1 * scale))
+    fig, axes = plt.subplots(1, len(models), figsize=(3 * scale,  1 * scale), sharey=True)
+    max_acc = data.loc[models].loc[:, data_props].apply(np.max).max()
+    min_acc = data.loc[models].loc[:, data_props].apply(np.max).min()
+    axes[0].set_ylim(min_acc - .03, max_acc +.01)
     for m, ax in zip(models, axes.flatten()):
         d = data.loc[m]
         plot_runs(ax, d.loc[data_props], running_max)
@@ -60,7 +63,7 @@ def make_figure(data, models, data_props, running_max=False):
 
     handles, labels = axes.flatten()[0].get_legend_handles_labels()    
     fig.legend(handles, labels, ncol=len(labels), loc='upper center')    
-    fig.tight_layout(rect=(0,0,1,.95))
+    fig.tight_layout(rect=(0,0,1,.92))
     return fig, axes
 
 
@@ -68,22 +71,28 @@ def main():
     data = pd.read_parquet('./exp_res/aggregated_run.parquet')\
                 .groupby(['model', 'data_props']).apply(aggregate_runs)\
                 .sort_index()
-    
-    models = ['resnet18', 'resnet34', 'resnet50']
-    props = ['1,0,0', '1,1,0', '1,0,1', '1,1,1']
-    
-    fig, axes = make_figure(data['accuracy'], models, props)
-    fig.savefig('./exp_res/resnets.png')
+    out_dir = Path('./figs/')
+    out_dir.mkdir(parents=True, exist_ok=True)
+    data_props = [
+            ['1,0,0', '1,1,0', '1,0,1', '1,1,1'],
+            ['1,0,0', '.5,.5,0', '.5,0,.5', '.5,0,0'],
+            ['1,0,0', '0,1,0', '0,0,1']
+    ]
 
-    fig, axes = make_figure(data['accuracy'], models, props, running_max=True)
-    fig.savefig('./exp_res/resnets_running_max.png')
+    for props, suffix in zip(data_props, ['', '_50_50', '_syn_only' ]): 
+        models = ['resnet18', 'resnet34', 'resnet50']
+        fig, axes = make_figure(data['accuracy'], models, props)
+        fig.savefig(out_dir / f'resnets{suffix}.png')
 
-    models = ['resnet18', 'vgg16', 'densenet121']
-    
-    fig, axes = make_figure(data['accuracy'], models, props)
-    fig.savefig('./exp_res/res_vgg_dense.png')
-    fig, axes = make_figure(data['accuracy'], models, props, running_max=True)
-    fig.savefig('./exp_res/res_vgg_dense_running_max.png')
+        fig, axes = make_figure(data['accuracy'], models, props, running_max=True)
+        fig.savefig(out_dir / f'resnets_running_max{suffix}.png')
+
+        models = ['resnet18', 'vgg16', 'densenet121']
+        
+        fig, axes = make_figure(data['accuracy'], models, props)
+        fig.savefig(out_dir / f'res_vgg_dense{suffix}.png')
+        fig, axes = make_figure(data['accuracy'], models, props, running_max=True)
+        fig.savefig(out_dir / f'res_vgg_dense_running_max{suffix}.png')
 
 if __name__ == '__main__':
     main()
