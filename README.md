@@ -4,16 +4,6 @@
 ## Dependencies
 ```
 python=3.8 or higher
-
-diffusers==0.10.2
-joblib==1.1.0
-matplotlib==3.1.1
-numpy==1.19.5
-pandas==1.1.5
-Pillow==9.3.0
-torch==1.2.0
-torchvision==0.11.2
-tqdm==4.63.0
 ```
 ## Installation
 
