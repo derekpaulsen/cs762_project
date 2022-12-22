@@ -19,6 +19,14 @@ Then the dependencies can be installed with pip
 pip install -r ./requirements.txt
 ```
 
+In the process of generating data, you may need torch package with cuda
+
+```bash
+pip uninstall torch
+pip install torch==1.12.1 --extra-index-url https://download.pytorch.org/whl/cu116
+```
+
+
 ## Generating Data
 
 To generate synthetic data we used the `./gen_data_cifar10.py`. Before running this script, add your 
